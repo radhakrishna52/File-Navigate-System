@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File System Navigator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 800px;
+      margin: 50px auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    button {
+      display: block;
+      margin: 0 auto 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 20px;
+    }
+
+    li::before {
+      content: "📄 ";
+    }
+
+    li.folder::before {
+      content: "📂 ";
+      font-weight: bold;
+    }
+
+    ul ul {
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📁 File System Navigator</h1>
+    <button id="openBtn">Open Folder</button>
+    <ul id="fileTree"></ul>
+  </div>
+
+  <script>
+    const openBtn = document.getElementById('openBtn');
+    const fileTree = document.getElementById('fileTree');
+
+    openBtn.addEventListener('click', async () => {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        fileTree.innerHTML = '';
+        await traverseDirectory(dirHandle, fileTree);
+      } catch (err) {
+        alert("❌ Access denied or unsupported browser.");
+        console.error(err);
+      }
+    });
+
+    async function traverseDirectory(dirHandle, parentElement) {
+      for await (const entry of dirHandle.values()) {
+        const li = document.createElement('li');
+        li.textContent = entry.name;
+
+        if (entry.kind === 'directory') {
+          li.classList.add('folder');
+          const subList = document.createElement('ul');
+          li.appendChild(subList);
+          parentElement.appendChild(li);
+          await traverseDirectory(await dirHandle.getDirectoryHandle(entry.name), subList);
+        } else {
+          parentElement.appendChild(li);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
